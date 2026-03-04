@@ -55,15 +55,20 @@ def main():
         r = requests.get(metadata_url, stream=True, headers={
             "Authorization": f"token {github_token}"
         })
+        if not r.ok:
+            output = f"Failed to get run metadata: GitHub API returned {r.status_code} for {metadata_url}"
+            print(f"Error: {output}")
+            print(f"::set-output name=result::{output}")
+            sys.exit(-1)
         metadata = json.loads(r.content)
         jobs_url = metadata.get('jobs_url')
-        metadata.pop('repository')
-        metadata.pop('head_repository')
+        metadata.pop('repository', None)
+        metadata.pop('head_repository', None)
         metadata = {
             "metadata_" + k: v for k,v in metadata.items()
         }
     except Exception as exc:
-        output = "Failed to get run metadata" + str(exc)
+        output = "Failed to get run metadata: " + str(exc)
         print(f"Error: {output}")
         print(f"::set-output name=result::{output}")
         sys.exit(-1)
